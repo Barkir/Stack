@@ -19,6 +19,8 @@ int Stack_Dtor(Stack * stk)
 {
     stk->capacity = 0;
     stk->size = 0;
+
+    assert(stk->data);
     free(stk->data);
     fprintf(stderr, "Stack Terminated!\n");
     return OK;
