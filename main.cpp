@@ -5,8 +5,8 @@
 #include "stack.h"
 
 #define BEGIN_CHECK double err = 0;
-#define CHECKED_Push(stk, num) if (!isnan(err)) err = Push(stk, num); else return -1
-#define CHECKED_Pop(stk) if (!isnan(err)) err = Pop(stk); else return -1
+#define CHECKED_Push(stk, num) if (!isnan(err)) err = StackPush(stk, num); else StackAssert(stk)
+#define CHECKED_Pop(stk) if (!isnan(err)) err = StackPop(stk); else StackAssert(stk)
 
 int main(void)
 {

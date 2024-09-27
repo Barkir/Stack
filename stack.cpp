@@ -14,7 +14,6 @@ int Stack_Ctor(Stack * stk, size_t stk_capacity)
     assert(stk->data);
     return OK;
 }
-
 int Stack_Dtor(Stack * stk)
 {
     stk->capacity = 0;
@@ -26,7 +25,7 @@ int Stack_Dtor(Stack * stk)
     return OK;
 }
 
-StackEl_t Push(Stack * stk, StackEl_t elem)
+StackEl_t StackPush(Stack * stk, StackEl_t elem)
 {
     if (stk->size >= stk->capacity)
         if(StackExpand(stk) == ERROR) return NAN;
@@ -36,7 +35,7 @@ StackEl_t Push(Stack * stk, StackEl_t elem)
     return elem;
 }
 
-StackEl_t Pop(Stack * stk)
+StackEl_t StackPop(Stack * stk)
 {
     StackEl_t elem = 0;
 
@@ -72,15 +71,27 @@ int StackShrink(Stack * stk)
     return OK;
 }
 
+void StackAssertFunc(Stack * stk, int LINE, const char * FILE)
+{
+    if (stk->data)
+    {
+        stk->data = 0;
+        stk->capacity = 0;
+        free(stk->data);
+    }
+    fprintf(stderr, "StackAssert failed!\n[Line %d]\n[File %s]\n", LINE, FILE);
+    abort();
+}
+
 void PrintStack(Stack * stk)
 {
     printf("(stack capacity = %lu)\n", stk->capacity);
     printf("(stack size = %lu)\n", stk->size);
 
     printf("{");
-    for (int i = 0; i < stk->size; i++)
+    for (int i = stk->size - 1; i >= 0; i--)
     {
-        if (i != stk->size - 1) printf("%lg, ", stk->data[i]);
+        if (i != 0) printf("%lg, ", stk->data[i]);
         else printf("%lg", stk->data[i]);
     }
     printf("}\n\n");
