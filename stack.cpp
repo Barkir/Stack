@@ -5,16 +5,22 @@
 
 #include "stack.h"
 
-int Stack_Ctor(Stack * stk, size_t stk_capacity)
+int DoStackCtor(Stack * stk, size_t stk_capacity, const char * NAME, int LINE, const char * FILE, const char * FUNC)
 {
+    ON_DEBUG(stk->NAME = NAME;)
+    ON_DEBUG(stk->LINE = LINE;)
+    ON_DEBUG(stk->FUNC = FUNC;)
+    ON_DEBUG(stk->FILE = FILE;)
+
     stk->capacity = stk_capacity < 16 ? 16 : stk_capacity;
     stk->size = 0;
     stk->data = (StackEl_t*) calloc(stk->capacity, sizeof(StackEl_t));
 
     assert(stk->data);
-    return OK;
+    return SUCCESS;
 }
-int Stack_Dtor(Stack * stk)
+
+int DoStackDtor(Stack * stk)
 {
     stk->capacity = 0;
     stk->size = 0;
@@ -22,65 +28,80 @@ int Stack_Dtor(Stack * stk)
     assert(stk->data);
     free(stk->data);
     fprintf(stderr, "Stack Terminated!\n");
-    return OK;
+    return SUCCESS;
 }
 
-StackEl_t StackPush(Stack * stk, StackEl_t elem)
+int DoStackPush(Stack * stk, StackEl_t elem)
 {
     if (stk->size >= stk->capacity)
-        if(StackExpand(stk) == ERROR) return NAN;
+        if(StackExpand(stk) == ERROR) return ERROR;
 
     stk->data[stk->size] = elem;
     stk->size++;
-    return elem;
+    return SUCCESS;
 }
 
-StackEl_t StackPop(Stack * stk)
+// top
+// std::stack
+
+int DoStackPop(Stack * stk)
 {
     StackEl_t elem = 0;
 
     if (stk->size < stk->capacity / 4)
-        if (StackShrink(stk) == ERROR) return NAN;
+        if (StackShrink(stk) == ERROR) return ERROR;
 
     elem = stk->data[stk->size];
     stk->data[stk->size] = 0;
     stk->size--;
-    return elem;
-
+    return SUCCESS;
 }
 
 int StackExpand(Stack * stk)
 {
     StackEl_t * check = 0;
     if ((check = (StackEl_t*) realloc(stk->data, (stk->capacity * 2) * sizeof(*(stk->data)))) == NULL)
-        return ERROR;
+        return BADDATA;
 
     stk->data = check;
     stk->capacity *= 2;
-    return OK;
+    return SUCCESS;
 }
 
 int StackShrink(Stack * stk)
 {
     StackEl_t * check = 0;
     if ((check = (StackEl_t*) realloc(stk->data, (stk->capacity / 4) * sizeof(*(stk->data)))) == NULL)
-        return ERROR;
+        return BADDATA;
 
     stk->data = check;
     stk->capacity /= 4;
-    return OK;
+    return SUCCESS;
 }
 
-void StackAssertFunc(Stack * stk, int LINE, const char * FILE)
+void StackAssertFunc(Stack * stk, int LINE, const char * FILE, const char * FUNC)
 {
-    if (stk->data)
+    int err = StackError(stk);
+    if (!err)
     {
-        stk->data = 0;
-        stk->capacity = 0;
-        free(stk->data);
+        fprintf(stderr, "StackAssert failed! %s: %d (%s) (error code: %d)", FILE, LINE, FUNC, err);
+        abort();
     }
-    fprintf(stderr, "StackAssert failed!\n[Line %d]\n[File %s]\n", LINE, FILE);
-    abort();
+}
+
+void StackDump(Stack * stk)
+{
+    FILE * fp = fopen("stack.dmp", "wb");
+
+}
+
+int StackError(Stack * stk)
+{
+    if (!stk)               return BADSTK;
+    if (stk->size < 0)      return BADSIZE;
+    if (stk->capacity < 0)  return BADCAP;
+    if (!stk->data)         return BADDATA;
+    return SUCCESS;
 }
 
 void PrintStack(Stack * stk)
