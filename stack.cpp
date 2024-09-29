@@ -13,7 +13,7 @@ int StackCtor(Stack * stk, size_t stk_capacity ON_DEBUG(COMMA const char * NAME 
     stk->FUNC = FUNC;
     stk->FILE = FILE;
 #endif
-
+    if (stk_capacity == 0) return SUCCESS;
     stk->capacity = stk_capacity < 16 ? 16 : stk_capacity;
     stk->size = 0;
     stk->data = (StackEl_t*) calloc(stk->capacity, sizeof(StackEl_t));
@@ -54,17 +54,21 @@ int StackPush(Stack * stk, StackEl_t elem)
 int StackPop(Stack * stk)
 {
     STACK_ASSERT(stk);
-    StackEl_t elem = 0;
 
     if (stk->size < stk->capacity / 4)
         if (StackShrink(stk) == ERROR) return ERROR;
 
-    elem = stk->data[stk->size];
     stk->data[stk->size] = 0;
     stk->size--;
 
     STACK_ASSERT(stk);
     return SUCCESS;
+}
+
+StackEl_t StackTop(Stack * stk)
+{
+    STACK_ASSERT(stk);
+    return stk->data[stk->size - 1];
 }
 
 int StackExpand(Stack * stk)

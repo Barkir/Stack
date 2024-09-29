@@ -23,6 +23,7 @@ typedef double StackEl_t;
 #define BEGIN_CHECK int err = 0;
 #define STACK_PUSH(stk, num) if (!err) err = StackPush(stk, num); else return -1
 #define STACK_POP(stk) if (!err) err = StackPop(stk); else return -1
+#define STACK_TOP(stk) StackTop(stk)
 
 
 enum err_val
@@ -52,6 +53,7 @@ int StackDtor(Stack * stk);
 
 int StackPush(Stack * stk, StackEl_t elem);
 int StackPop(Stack * stk);
+StackEl_t StackTop(Stack * stk);
 
 int StackExpand(Stack * stk);
 int StackShrink(Stack * stk);
