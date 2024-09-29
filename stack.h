@@ -20,9 +20,9 @@ typedef double StackEl_t;
 #define STACK_DTOR(stk) StackDtor(stk)
 #define STACK_DUMP(stk) StackDump(stk, __LINE__, __FILE__, __func__)
 
-#define BEGIN_CHECK double err = 0;
-#define STACK_PUSH(stk, num) if (!err) err = StackPush(stk, num); else STACK_ASSERT(stk)
-#define STACK_POP(stk) if (!err) err = StackPop(stk); else STACK_ASSERT(stk)
+#define BEGIN_CHECK int err = 0;
+#define STACK_PUSH(stk, num) if (!err) err = StackPush(stk, num); else return -1
+#define STACK_POP(stk) if (!err) err = StackPop(stk); else return -1
 
 
 enum err_val
