@@ -1,0 +1,7 @@
+Stack [0x7ffc2a5ac308]
+called from stack.cpp: 40 -> (StackPush)
+name "&stk" born at main.cpp: 12 -> (main)
+
+capacity = 16
+size = 18446744073709551615
+data[0x5614591d92a0]
