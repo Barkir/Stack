@@ -16,7 +16,11 @@ int StackCtor(Stack * stk, size_t stk_capacity ON_DEBUG(COMMA const char * NAME 
     if (stk_capacity == 0) return SUCCESS;
     stk->capacity = stk_capacity < 16 ? 16 : stk_capacity;
     stk->size = 0;
-    stk->data = (StackEl_t*) calloc(stk->capacity, sizeof(StackEl_t));
+    stk->data = (StackEl_t*) calloc(stk->capacity + 2, sizeof(StackEl_t));
+
+#ifdef DEBUG
+    CanaryInstall(stk);
+#endif
 
     STACK_ASSERT(stk);
     return SUCCESS;
@@ -28,37 +32,32 @@ int StackDtor(Stack * stk)
     stk->capacity = 0;
     stk->size = 0;
 
+    stk->data--;
     free(stk->data);
-    fprintf(stderr, "Stack Terminated!\n");
-
-    STACK_ASSERT(stk);
+    printf("Stack Terminated!\n");
     return SUCCESS;
 }
 
 int StackPush(Stack * stk, StackEl_t elem)
 {
     STACK_ASSERT(stk);
-    if (stk->size >= stk->capacity)
+    if ((stk->size + 1) >= stk->capacity)
         if(StackExpand(stk) == ERROR) return ERROR;
 
-    stk->data[stk->size] = elem;
     stk->size++;
+    stk->data[stk->size - 1] = elem;
 
     STACK_ASSERT(stk);
     return SUCCESS;
 }
 
-// top
-// std::stack
-
 int StackPop(Stack * stk)
 {
     STACK_ASSERT(stk);
-
-    if (stk->size < stk->capacity / 4)
+    if (stk->size <= stk->capacity / 4)
         if (StackShrink(stk) == ERROR) return ERROR;
 
-    stk->data[stk->size] = 0;
+    stk->data[stk->size - 1] = 0;
     stk->size--;
 
     STACK_ASSERT(stk);
@@ -75,11 +74,17 @@ int StackExpand(Stack * stk)
 {
     STACK_ASSERT(stk);
     StackEl_t * check = 0;
-    if ((check = (StackEl_t*) realloc(stk->data, (stk->capacity * 2) * sizeof(*(stk->data)))) == NULL)
+
+    stk->data--;
+    if ((check = (StackEl_t*) realloc(stk->data, (stk->capacity * 2 + 2) * sizeof(*(stk->data)))) == NULL)
         return BADDATA;
 
     stk->data = check;
     stk->capacity *= 2;
+
+#ifdef DEBUG
+    CanaryInstall(stk);
+#endif
 
     STACK_ASSERT(stk);
     return SUCCESS;
@@ -89,11 +94,17 @@ int StackShrink(Stack * stk)
 {
     STACK_ASSERT(stk);
     StackEl_t * check = 0;
-    if ((check = (StackEl_t*) realloc(stk->data, (stk->capacity / 4) * sizeof(*(stk->data)))) == NULL)
+
+    stk->data--;
+    if ((check = (StackEl_t*) realloc(stk->data, (stk->capacity / 4 + 2) * sizeof(*(stk->data)))) == NULL)
         return BADDATA;
 
     stk->data = check;
     stk->capacity /= 4;
+
+#ifdef DEBUG
+    CanaryInstall(stk);
+#endif
 
     STACK_ASSERT(stk);
     return SUCCESS;
@@ -101,6 +112,7 @@ int StackShrink(Stack * stk)
 
 void StackAssertFunc(Stack * stk, int LINE, const char * FILE, const char * FUNC)
 {
+#ifdef DEBUG
     int err = StackError(stk);
     if (err)
     {
@@ -108,6 +120,7 @@ void StackAssertFunc(Stack * stk, int LINE, const char * FILE, const char * FUNC
         StackDump(stk, LINE, FILE, FUNC);
         abort();
     }
+#endif
 }
 
 void StackDump(Stack * stk, int LINE, const char * CALL_FILE, const char * FUNC)
@@ -115,14 +128,20 @@ void StackDump(Stack * stk, int LINE, const char * CALL_FILE, const char * FUNC)
 #ifdef DEBUG
     FILE * fp = fopen("stack.dmp", "wb");
     fprintf(fp, "Stack [%p]\n", &stk);
+
+    if (*LEFT_CANARY == 0xDEADBEEF)     fprintf(fp, "LeftCanary [%p] = %lg\n",           LEFT_CANARY,    *LEFT_CANARY);
+    else                                fprintf(fp, "LeftCanary [%p] = %lg [DEAD⚰]\n",  LEFT_CANARY,    *LEFT_CANARY);
+    if (*RIGHT_CANARY == 0xDEADBEEF)    fprintf(fp, "RightCanary [%p] = %lg\n",          RIGHT_CANARY,   *RIGHT_CANARY);
+    else                                fprintf(fp, "RightCanary [%p] = %lg [DEAD⚰]\n", RIGHT_CANARY,   *RIGHT_CANARY);
+
     fprintf(fp, "called from %s: %d -> (%s)\n", CALL_FILE, LINE, FUNC);
     fprintf(fp, "name \"%s\" born at %s: %d -> (%s)\n", stk->NAME, stk->FILE, stk->LINE, stk->FUNC);
     fprintf(fp, "\ncapacity = %lu\nsize = %lu\ndata[%p]\n", stk->capacity, stk->size, stk->data);
-    if (!StackError(stk))
+    if (stk->data)
     {
-        for (int i = stk->size; i >= 0; i--)
-            if (isfinite(stk->data[i])) fprintf(fp, "*[%lu] = %lg\n", stk->size - i, stk->data[i]);
-            else                        fprintf(fp, " [%lu] = %lg (pzn)\n", stk->size - i, stk->data[i]);
+        for (int i = stk->size - 1; i >= 0; i--)
+            if (isfinite(stk->data[i])) fprintf(fp, "*[%lu] = %lg\n", stk->size - i - 1, stk->data[i]);
+            else                        fprintf(fp, " [%lu] = %lg (pzn)\n", stk->size - i - 1, stk->data[i]);
     }
     fclose(fp);
 #endif
@@ -130,11 +149,16 @@ void StackDump(Stack * stk, int LINE, const char * CALL_FILE, const char * FUNC)
 
 int StackError(Stack * stk)
 {
-    if (!stk)                                       return BADSTK;
-    if (stk->size < 0 || stk->size > SIZE_MAX)      return BADSIZE;
-    if (stk->capacity < 0)                          return BADCAP;
-    if (!stk->data)                                 return BADDATA;
+#ifdef DEBUG
+    if (!stk)                                                               return BADSTK;
+    if (stk->size < 0 || stk->size > SIZE_MAX)                              return BADSIZE;
+    if (stk->capacity < 0)                                                  return BADCAP;
+    if (!stk->data)                                                         return BADDATA;
+    if (LEFT_CANARY && RIGHT_CANARY)
+        if (*LEFT_CANARY != 0xDEADBEEF || *RIGHT_CANARY != 0xDEADBEEF)      return DEADCANARY;
+#endif
     return SUCCESS;
+
 }
 
 void PrintStack(Stack * stk)
@@ -149,4 +173,20 @@ void PrintStack(Stack * stk)
         else printf("%lg", stk->data[i]);
     }
     printf("}\n\n");
+}
+
+void CanaryInstall(Stack * stk)
+{
+#ifdef DEBUG
+
+    *stk->data = 0xDEADBEEF;
+    LEFT_CANARY = stk->data;
+
+    stk->data++;
+
+    *(stk->data + stk->capacity) = 0xDEADBEEF;
+    RIGHT_CANARY = stk->data + stk->capacity;
+
+    STACK_ASSERT(stk);
+#endif
 }

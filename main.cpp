@@ -15,16 +15,15 @@ int main(void)
 {
     BEGIN_CHECK
 
-    Stack stk = {};
-    if (STACK_CTOR(&stk, 16) != SUCCESS) return ERROR;
-    PrintStack(&stk);
-    for (int i = 0; i < 10; i++)
-    {
-        STACK_PUSH(&stk, i);
-        printf("top = %lg\n", STACK_TOP(&stk));
-    }
-    PrintStack(&stk);
+    Torture Dead = {};
+    if (STACK_CTOR(&Dead.stk, 10) != SUCCESS) return ERROR;
+    for (int i = 0; i < 5; i++)
+        STACK_PUSH(&Dead.stk, i);
+    STACK_PUSH(&Dead.stk, NAN);
+    Dead.LeftExec = (char*) Dead.stk.data - 1;
+    PrintStack(&Dead.stk);
+    *Dead.LeftExec = 1;
+    STACK_PUSH(&Dead.stk, 10);
 
-    STACK_DTOR(&stk);
     return 0;
 }

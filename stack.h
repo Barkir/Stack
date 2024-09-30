@@ -25,6 +25,8 @@ typedef double StackEl_t;
 #define STACK_POP(stk) if (!err) err = StackPop(stk); else return -1
 #define STACK_TOP(stk) StackTop(stk)
 
+static double * LEFT_CANARY = 0;
+static double * RIGHT_CANARY = 0;
 
 enum err_val
 {
@@ -33,7 +35,8 @@ enum err_val
     BADCAP = 2,
     BADSTK = 3,
     BADDATA = 4,
-    ERROR = 5
+    DEADCANARY = 5,
+    ERROR = 6
 };
 
 struct Stack
@@ -45,6 +48,13 @@ struct Stack
 
     StackEl_t * data;
     size_t size, capacity;
+};
+
+struct Torture
+{
+    char * LeftExec;
+    Stack stk;
+    char * RightExec;
 };
 
 int StackCtor(Stack * stk, size_t stk_capacity \
@@ -63,5 +73,7 @@ void PrintStack(Stack * stk);
 int StackError(Stack * stk);
 void StackAssertFunc(Stack * stk, int LINE, const char * CALL_FILE, const char * FUNC);
 void StackDump(Stack * stk, int LINE, const char * FILE, const char * FUNC);
+
+void CanaryInstall(Stack * stk);
 
 #endif
