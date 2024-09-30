@@ -19,6 +19,7 @@ int main(void)
     if (STACK_CTOR(&Dead.stk, 10) != SUCCESS) return ERROR;
     for (int i = 0; i < 5; i++)
         STACK_PUSH(&Dead.stk, i);
+
     STACK_PUSH(&Dead.stk, NAN);
     Dead.LeftExec = (char*) Dead.stk.data - 1;
     PrintStack(&Dead.stk);

@@ -163,6 +163,7 @@ int StackError(Stack * stk)
 
 void PrintStack(Stack * stk)
 {
+    STACK_ASSERT(stk);
     printf("(stack capacity = %lu)\n", stk->capacity);
     printf("(stack size = %lu)\n", stk->size);
 
@@ -173,6 +174,7 @@ void PrintStack(Stack * stk)
         else printf("%lg", stk->data[i]);
     }
     printf("}\n\n");
+    STACK_ASSERT(stk);
 }
 
 void CanaryInstall(Stack * stk)
