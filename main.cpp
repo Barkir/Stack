@@ -16,7 +16,6 @@
 int main(void)
 {
     BEGIN_CHECK
-
     Stack stk = {};
     STACK_CTOR(&stk, 10);
     STACK_PUSH(&stk, 10);

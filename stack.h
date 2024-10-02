@@ -12,6 +12,7 @@
 #endif
 
 typedef double StackEl_t;
+typedef double Cannary_t;
 
 #define COMMA ,
 #define SIZE_MAX 100000
@@ -25,9 +26,11 @@ typedef double StackEl_t;
 #define STACK_POP(stk) if (!err) err = StackPop(stk); else return -1
 #define STACK_TOP(stk) StackTop(stk)
 
-static double * LEFT_CANARY = 0;
-static double * RIGHT_CANARY = 0;
+static Cannary_t * LEFT_CANARY = 0;
+static Cannary_t * RIGHT_CANARY = 0;
 
+// TODO: void*
+// TODO: error description
 enum err_val
 {
     SUCCESS = 0,

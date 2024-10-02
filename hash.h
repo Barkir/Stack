@@ -2,8 +2,14 @@
 #define HASH_H
 
 #include "stack.h"
+#include <stdint.h>
 
-void DoHash(void * data, size_t size, int * hash);
-static int HASH = 5381;
+typedef uint32_t hash_t;
+
+void MurMur(void * data, size_t size, hash_t seed, hash_t * HASH);
+hash_t MurScramble(hash_t k);
+
+static hash_t HASH = 0;
+const static hash_t SEED = 1234566666;
 
 #endif
