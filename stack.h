@@ -36,7 +36,8 @@ enum err_val
     BADSTK = 3,
     BADDATA = 4,
     DEADCANARY = 5,
-    ERROR = 6
+    WRONGHASH = 6,
+    ERROR = 7
 };
 
 struct Stack
