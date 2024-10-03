@@ -2,11 +2,12 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <math.h>
+#include <string.h>
 
 #include "stack.h"
 #include "hash.h"
 
-int StackCtor(Stack * stk, size_t stk_capacity ON_DEBUG(COMMA const char * NAME COMMA int LINE COMMA const char * FILE COMMA const char * FUNC))
+int StackCtorFunc(Stack * stk, size_t stk_capacity ON_DEBUG(COMMA const char * NAME COMMA int LINE COMMA const char * FILE COMMA const char * FUNC))
 {
 #ifdef DEBUG
     stk->NAME = NAME;
@@ -16,12 +17,16 @@ int StackCtor(Stack * stk, size_t stk_capacity ON_DEBUG(COMMA const char * NAME 
 #endif
 
     if (stk_capacity == 0) return SUCCESS;
+
     stk->capacity = stk_capacity < 16 ? 16 : stk_capacity;
     stk->size = 0;
-    stk->data = (StackEl_t*) calloc(stk->capacity + 2, sizeof(StackEl_t));
+    stk->data = (StackEl_t*) calloc(stk->capacity ON_DEBUG(+ 2), sizeof(StackEl_t));
 
 #ifdef DEBUG
-    MurMur(stk->data, stk->capacity * sizeof(double), SEED, &HASH);
+    stk->data++;
+    memset(stk->data, 1, stk->capacity);
+    MurMur(stk->data, stk->capacity * sizeof(StackEl_t), SEED, &data_hash);
+    MurMur(stk, sizeof(stk), SEED, &stack_hash);
     CanaryInstall(stk);
 #endif
 
@@ -29,7 +34,7 @@ int StackCtor(Stack * stk, size_t stk_capacity ON_DEBUG(COMMA const char * NAME 
     return SUCCESS;
 }
 
-int StackDtor(Stack * stk)
+int StackDtorFunc(Stack * stk)
 {
     STACK_ASSERT(stk);
     stk->capacity = 0;
@@ -50,7 +55,8 @@ int StackPush(Stack * stk, StackEl_t elem)
     stk->size++;
     stk->data[stk->size - 1] = elem;
 #ifdef DEBUG
-    MurMur(stk->data, stk->capacity * sizeof(double), SEED, &HASH);
+    MurMur(stk->data, stk->capacity * sizeof(StackEl_t), SEED, &data_hash);
+    MurMur(stk, sizeof(stk), SEED, &stack_hash);
 #endif
 
     STACK_ASSERT(stk);
@@ -69,7 +75,8 @@ int StackPop(Stack * stk)
     stk->size--;
 
 #ifdef DEBUG
-    MurMur(stk->data, stk->capacity * sizeof(double), SEED, &HASH);
+    MurMur(stk->data, stk->capacity * sizeof(StackEl_t), SEED, &data_hash);
+    MurMur(stk, sizeof(stk), SEED, &stack_hash);
 #endif
 
     STACK_ASSERT(stk);
@@ -87,16 +94,19 @@ int StackExpand(Stack * stk)
     STACK_ASSERT(stk);
     StackEl_t * check = 0;
 
-    stk->data--;
-    if ((check = (StackEl_t*) realloc(stk->data, (stk->capacity * 2 + 2) * sizeof(*(stk->data)))) == NULL)
+    ON_DEBUG(stk->data--;)
+    if ((check = (StackEl_t*) realloc(stk->data, (stk->capacity * 2 ON_DEBUG(+ 2)) * sizeof(*(stk->data)))) == NULL)
         return BADDATA;
 
     stk->data = check;
     stk->capacity *= 2;
 
 #ifdef DEBUG
+    stk->data++;
+    memset(stk->data + stk->capacity / 2, pzn, stk->capacity / 2);
+    MurMur(stk->data, stk->capacity * sizeof(StackEl_t), SEED, &data_hash);
+    MurMur(stk, sizeof(stk), SEED, &stack_hash);
     CanaryInstall(stk);
-    MurMur(stk->data, stk->capacity * sizeof(StackEl_t), SEED, &HASH);
 #endif
 
     STACK_ASSERT(stk);
@@ -108,16 +118,18 @@ int StackShrink(Stack * stk)
     STACK_ASSERT(stk);
     StackEl_t * check = 0;
 
-    stk->data--;
-    if ((check = (StackEl_t*) realloc(stk->data, (stk->capacity / 4 + 2) * sizeof(*(stk->data)))) == NULL)
+    ON_DEBUG(stk->data--;)
+    if ((check = (StackEl_t*) realloc(stk->data, (stk->capacity / 4 ON_DEBUG(+ 2)) * sizeof(*(stk->data)))) == NULL)
         return BADDATA;
 
     stk->data = check;
     stk->capacity /= 4;
 
 #ifdef DEBUG
+    stk->data++;
+    MurMur(stk->data, stk->capacity * sizeof(StackEl_t), SEED, &data_hash);
+    MurMur(stk, sizeof(stk), SEED, &stack_hash);
     CanaryInstall(stk);
-    MurMur(stk->data, stk->capacity * sizeof(double), SEED, &HASH);
 #endif
 
     STACK_ASSERT(stk);
@@ -156,11 +168,16 @@ void StackDump(Stack * stk, int LINE, const char * CALL_FILE, const char * FUNC)
     if (stk->data)
     {
         for (int i = stk->size - 1; i >= 0; i--)
-            if (isfinite(stk->data[i])) fprintf(fp, "*[%lu] = %lg\n", stk->size - i - 1, stk->data[i]);
-            else                        fprintf(fp, " [%lu] = %lg (pzn)\n", stk->size - i - 1, stk->data[i]);
+            PrintEl(fp, stk->data[i], stk, i);
     }
     fclose(fp);
 #endif
+}
+
+void PrintEl(FILE * fp, StackEl_t el, Stack * stk, int i)
+{
+    if (isfinite(el))           fprintf(fp, "*[%lu] = %lg\n", stk->size - i - 1, el);
+    else                        fprintf(fp, " [%lu] = %lg (pzn)\n", stk->size - i - 1, el);
 }
 
 void PrintStack(Stack * stk)
@@ -182,14 +199,17 @@ void PrintStack(Stack * stk)
 int StackError(Stack * stk)
 {
 #ifdef DEBUG
-    hash_t HCHECK = 0;
-    MurMur(stk->data, stk->capacity * sizeof(StackEl_t), SEED, &HCHECK);
+    hash_t stack_hash_check = 0;
+    hash_t data_hash_check = 0;
+
+    MurMur(stk->data, stk->capacity * sizeof(StackEl_t), SEED, &data_hash_check);
+    MurMur(stk, sizeof(stk), SEED, &stack_hash_check);
 
     if (!stk)                                                               return BADSTK;
     if (stk->size < 0 || stk->size > SIZE_MAX)                              return BADSIZE;
     if (stk->capacity < 0)                                                  return BADCAP;
     if (!stk->data)                                                         return BADDATA;
-    if (HCHECK != HASH)                                                     return WRONGHASH;
+    if (data_hash_check != data_hash || stack_hash_check != stack_hash)     return WRONGHASH;
     if (LEFT_CANARY && RIGHT_CANARY)
         if (*LEFT_CANARY != 0xDEADBEEF || *RIGHT_CANARY != 0xDEADBEEF)      return DEADCANARY;
 #endif
@@ -201,6 +221,7 @@ void CanaryInstall(Stack * stk)
 {
 #ifdef DEBUG
 
+    stk->data--;
     *stk->data = 0xDEADBEEF;
     LEFT_CANARY = stk->data;
 

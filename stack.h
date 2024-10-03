@@ -17,8 +17,8 @@ typedef double Cannary_t;
 #define COMMA ,
 #define SIZE_MAX 100000
 
-#define STACK_CTOR(stk, cap) StackCtor((stk), (cap) ON_DEBUG(COMMA (#stk) COMMA (__LINE__) COMMA (__FILE__) COMMA (__func__)))
-#define STACK_DTOR(stk) StackDtor(stk)
+#define STACK_CTOR(stk, cap) StackCtorFunc((stk), (cap) ON_DEBUG(COMMA (#stk) COMMA (__LINE__) COMMA (__FILE__) COMMA (__func__)))
+#define STACK_DTOR(stk) StackDtorFunc(stk)
 #define STACK_DUMP(stk) StackDump(stk, __LINE__, __FILE__, __func__)
 
 #define BEGIN_CHECK int err = 0;
@@ -28,6 +28,7 @@ typedef double Cannary_t;
 
 static Cannary_t * LEFT_CANARY = 0;
 static Cannary_t * RIGHT_CANARY = 0;
+const static StackEl_t pzn = -666;
 
 // TODO: void*
 // TODO: error description
@@ -61,9 +62,9 @@ struct Torture
     char * RightExec;
 };
 
-int StackCtor(Stack * stk, size_t stk_capacity \
+int StackCtorFunc(Stack * stk, size_t stk_capacity \
                 ON_DEBUG(COMMA const char * NAME COMMA int LINE COMMA const char * FILE COMMA const char * FUNC));
-int StackDtor(Stack * stk);
+int StackDtorFunc(Stack * stk);
 
 int StackPush(Stack * stk, StackEl_t elem);
 int StackPop(Stack * stk);
@@ -73,6 +74,7 @@ int StackExpand(Stack * stk);
 int StackShrink(Stack * stk);
 
 void PrintStack(Stack * stk);
+void PrintEl(FILE * fp, StackEl_t el, Stack * stk, int i);
 
 int StackError(Stack * stk);
 void StackAssertFunc(Stack * stk, int LINE, const char * CALL_FILE, const char * FUNC);

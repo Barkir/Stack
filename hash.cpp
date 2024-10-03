@@ -9,7 +9,6 @@ void MurMur(void * data, size_t size, hash_t seed, hash_t * HASH)
     uint8_t * d = (uint8_t * ) data;
     hash_t h = seed;
     hash_t k;
-
     for (size_t i = size >> 2; i; i--)
     {
         memcpy(&k, d, sizeof(hash_t));
@@ -18,7 +17,6 @@ void MurMur(void * data, size_t size, hash_t seed, hash_t * HASH)
         h = (h << 13) | (h >> 19);
         h = h * 5 + 0x6546b64;
     }
-
     k = 0;
     for (size_t i = size & 3; i; i--)
     {
