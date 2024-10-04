@@ -24,7 +24,6 @@ int StackCtorFunc(Stack * stk, size_t stk_capacity ON_DEBUG(COMMA const char * N
 
 #ifdef DEBUG
     stk->data++;
-    memset(stk->data, 1, stk->capacity);
     MurMur(stk->data, stk->capacity * sizeof(StackEl_t), SEED, &data_hash);
     MurMur(stk, sizeof(stk), SEED, &stack_hash);
     CanaryInstall(stk);
@@ -65,6 +64,7 @@ int StackPush(Stack * stk, StackEl_t elem)
 
 // std::vector::shrink_to_fit
 // TODO: two shrink pop, no shrink pop
+
 int StackPop(Stack * stk)
 {
     STACK_ASSERT(stk);

@@ -15,14 +15,6 @@
 
 int main(void)
 {
-    BEGIN_CHECK
-    Stack stk = {};
-    STACK_CTOR(&stk, 10);
-    for (int i = 0; i < 63; i++)
-        STACK_PUSH(&stk, 10);
-    PrintStack(&stk);
-        for (int i = 0; i < 48; i++)
-        STACK_POP(&stk);
-    PrintStack(&stk);
+
     return 0;
 }
