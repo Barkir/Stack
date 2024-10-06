@@ -21,7 +21,6 @@
 
 int main(void)
 {
-<<<<<<< HEAD
     BEGIN_CHECK
     Stack stk = {};
     char x = 120;
@@ -31,8 +30,5 @@ int main(void)
         STACK_PUSH(&stk, &x);
 
     STACK_DUMP(&stk);
-=======
-
->>>>>>> cefb24008ea6da09b564e39488f229cbbbd31ae5
     return 0;
 }
