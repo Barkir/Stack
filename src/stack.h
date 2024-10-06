@@ -1,6 +1,8 @@
 #ifndef STACK_H
 #define STACK_H
 
+#include <stdint.h>
+
 #define DEBUG
 
 #ifdef DEBUG
@@ -12,12 +14,12 @@
 #endif
 
 typedef double StackEl_t;
-typedef double Cannary_t;
+typedef uint64_t Cannary_t;
 
 #define COMMA ,
-#define SIZE_MAX 100000
+#define MAX_SIZE 100000
 
-#define STACK_CTOR(stk, cap) StackCtorFunc((stk), (cap) ON_DEBUG(COMMA (#stk) COMMA (__LINE__) COMMA (__FILE__) COMMA (__func__)))
+#define STACK_CTOR(stk, el_size, cap) StackCtorFunc((stk), (el_size), (cap) ON_DEBUG(COMMA (#stk) COMMA (__LINE__) COMMA (__FILE__) COMMA (__func__)))
 #define STACK_DTOR(stk) StackDtorFunc(stk)
 #define STACK_DUMP(stk) StackDump(stk, __LINE__, __FILE__, __func__)
 
@@ -26,12 +28,16 @@ typedef double Cannary_t;
 #define STACK_POP(stk) if (!err) err = StackPop(stk); else return -1
 #define STACK_TOP(stk) StackTop(stk)
 
-static Cannary_t * LEFT_CANARY = 0;
-static Cannary_t * RIGHT_CANARY = 0;
-const static StackEl_t pzn = -666;
+static Cannary_t * LEFT_CANNARY = 0;
+static Cannary_t * RIGHT_CANNARY = 0;
+
+static int Error = 0;
+const static int pzn = -666;
+const size_t CannarySize = sizeof(Cannary_t);
 
 // TODO: void*
 // TODO: error description
+
 enum err_val
 {
     SUCCESS = 0,
@@ -40,8 +46,9 @@ enum err_val
     BADSTK = 3,
     BADDATA = 4,
     DEADCANARY = 5,
-    WRONGHASH = 6,
-    ERROR = 7
+    WRONGDATAHASH = 6,
+    WRONGSTACKHASH = 7,
+    ERROR = 8
 };
 
 struct Stack
@@ -51,8 +58,8 @@ struct Stack
     ON_DEBUG(const char * FILE;)
     ON_DEBUG(const char * NAME;)
 
-    StackEl_t * data;
-    size_t size, capacity;
+    void * data;
+    size_t size, capacity, el_size;
 };
 
 struct Torture
@@ -62,24 +69,24 @@ struct Torture
     char * RightExec;
 };
 
-int StackCtorFunc(Stack * stk, size_t stk_capacity \
+int StackCtorFunc(Stack * stk, size_t el_size, size_t stk_capacity
                 ON_DEBUG(COMMA const char * NAME COMMA int LINE COMMA const char * FILE COMMA const char * FUNC));
 int StackDtorFunc(Stack * stk);
 
-int StackPush(Stack * stk, StackEl_t elem);
+int StackPush(Stack * stk, void * elem);
 int StackPop(Stack * stk);
-StackEl_t StackTop(Stack * stk);
+void * StackTop(Stack * stk);
 
 int StackExpand(Stack * stk);
 int StackShrink(Stack * stk);
 
-void PrintStack(Stack * stk);
-void PrintEl(FILE * fp, StackEl_t el, Stack * stk, int i);
+void PrintEl(FILE * fp, void * el, Stack * stk, int i);
 
 int StackError(Stack * stk);
 void StackAssertFunc(Stack * stk, int LINE, const char * CALL_FILE, const char * FUNC);
 void StackDump(Stack * stk, int LINE, const char * FILE, const char * FUNC);
 
-void CanaryInstall(Stack * stk);
+void CannaryInstall(Stack * stk);
+size_t CannaryShift(size_t size);
 
 #endif

@@ -10,6 +10,12 @@
 
 *   type BEGIN_CHECK and use only caps func (STACK_PUSH, STACK_POP, STACK_CTOR, STACK_DTOR etc.)
 *   to turn on debug mode define DEBUG in stack.h
+*   for correct STACK_DUMP work write your own PrintEl function (see example in stack.cpp)
+
+
+*   this version has some errors like:
+*   data nullptr check (fixing)
+*   stk.size rewrite check (fixing)
 
 ***********************************************************************************************/
 
@@ -17,12 +23,12 @@ int main(void)
 {
     BEGIN_CHECK
     Stack stk = {};
-    STACK_CTOR(&stk, 10);
-    for (int i = 0; i < 63; i++)
-        STACK_PUSH(&stk, 10);
-    PrintStack(&stk);
-        for (int i = 0; i < 48; i++)
-        STACK_POP(&stk);
-    PrintStack(&stk);
+    char x = 120;
+    if(STACK_CTOR(&stk, sizeof(int), 10) != SUCCESS) return ERROR;
+
+    for (int i = 0; i < 100; i++)
+        STACK_PUSH(&stk, &x);
+
+    STACK_DUMP(&stk);
     return 0;
 }
