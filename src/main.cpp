@@ -12,6 +12,11 @@
 *   to turn on debug mode define DEBUG in stack.h
 *   for correct STACK_DUMP work write your own PrintEl function (see example in stack.cpp)
 
+_____________________________________________________________
+
+*   before compiling please add a /bin folder in your project
+*   (used in makefile for .o files and binary file)
+_____________________________________________________________
 
 *   this version has some errors like:
 *   data nullptr check (fixing)
