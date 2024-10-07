@@ -26,7 +26,7 @@ int StackCtorFunc(Stack * stk, size_t el_size, size_t stk_capacity ON_DEBUG(COMM
 
 #ifdef DEBUG
     stk->data = (void*)((size_t) stk->data + CannarySize);
-    MurMur(stk, sizeof(stk), SEED, &stack_hash);
+    MurMur(stk, StackSize, SEED, &stack_hash);
     MurMur(stk->data, stk->capacity * stk->el_size, SEED, &data_hash);
     CannaryInstall(stk);
 #endif
@@ -58,7 +58,7 @@ int StackPush(Stack * stk, void * elem)
     memcpy((void*)(((size_t)stk->data) + (stk->size - 1) * stk->el_size), elem, stk->el_size);
 
 #ifdef DEBUG
-    MurMur(stk, sizeof(stk), SEED, &stack_hash);
+    MurMur(stk, StackSize, SEED, &stack_hash);
     MurMur(stk->data, stk->capacity * stk->el_size, SEED, &data_hash);
 #endif
 
@@ -79,7 +79,7 @@ int StackPop(Stack * stk)
     stk->size--;
 
 #ifdef DEBUG
-    MurMur(stk, sizeof(stk), SEED, &stack_hash);
+    MurMur(stk, StackSize, SEED, &stack_hash);
     MurMur(stk->data, stk->capacity * stk->el_size, SEED, &data_hash);
 #endif
 
@@ -107,7 +107,7 @@ int StackExpand(Stack * stk)
 
 #ifdef DEBUG
     stk->data = (void*)((size_t) stk->data + CannarySize);
-    MurMur(stk, sizeof(stk), SEED, &stack_hash);
+    MurMur(stk, StackSize, SEED, &stack_hash);
     MurMur(stk->data, stk->capacity * stk->el_size, SEED, &data_hash);
     CannaryInstall(stk);
 #endif
@@ -130,7 +130,7 @@ int StackShrink(Stack * stk)
 
 #ifdef DEBUG
     stk->data = (void*)((size_t) stk->data + CannarySize);
-    MurMur(stk, sizeof(stk), SEED, &stack_hash);
+    MurMur(stk, StackSize, SEED, &stack_hash);
     MurMur(stk->data, stk->capacity * stk->el_size, SEED, &data_hash);
     CannaryInstall(stk);
 #endif
@@ -160,14 +160,15 @@ int StackError(Stack * stk)
     hash_t stack_hash_check = 0;
     hash_t data_hash_check = 0;
 
-    MurMur(stk, sizeof(stk), SEED, &stack_hash_check);
+    MurMur(stk, StackSize, SEED, &stack_hash_check);
     // fprintf(stderr, "stack_hash = %d\n", stack_hash_check);
     MurMur(stk->data, stk->capacity * stk->el_size, SEED, &data_hash_check);
     // fprintf(stderr, "data_hash = %d\n", data_hash_check);
 
     if (stk == NULL)                                                        return BADSTK;
-    if (stk->size < 0 || stk->size > MAX_SIZE)                              return BADSIZE;
-    if (stk->capacity < 0 || stk->capacity > MAX_SIZE)                      return BADCAP;
+    if ((ssize_t)stk->size < 0 || stk->size > MAX_SIZE)                     return BADSIZE;
+    if ((ssize_t)stk->capacity < 0 || stk->capacity > MAX_SIZE)             return BADCAP;
+    if ((ssize_t)stk->el_size < 0 || stk->el_size > 32)                              return BADELSIZE;
     if (stk->data == NULL)                                                  return BADDATA;
     if (stack_hash_check != stack_hash)                                     return WRONGSTACKHASH;
     if (data_hash_check != data_hash)                                       return WRONGDATAHASH;
@@ -197,7 +198,7 @@ void StackDump(Stack * stk, int LINE, const char * CALL_FILE, const char * FUNC)
     fprintf(fp, "name \"%s\" born at %s: %d -> (%s)\n", stk->NAME, stk->FILE, stk->LINE, stk->FUNC);
     fprintf(fp, "\ncapacity = %lu\nsize = %lu\ndata[%p]\n", stk->capacity, stk->size, stk->data);
     if (Error == WRONGDATAHASH)          fprintf(fp, "MurMurData: (imposter is here): %d 𐐘💥╾━╤デ╦︻ඞා\n", data_hash);
-    else                                 fprintf(fp, "MurMurStack: %d\n", data_hash);
+    else                                 fprintf(fp, "MurMurData: %d\n", data_hash);
     if (stk->data)
     {
         for (int i = stk->size - 1; i >= 0; i--)

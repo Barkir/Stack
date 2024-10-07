@@ -48,7 +48,8 @@ enum err_val
     DEADCANARY = 5,
     WRONGDATAHASH = 6,
     WRONGSTACKHASH = 7,
-    ERROR = 8
+    BADELSIZE = 8,
+    ERROR = 9
 };
 
 struct Stack
@@ -61,6 +62,8 @@ struct Stack
     void * data;
     size_t size, capacity, el_size;
 };
+
+const size_t StackSize = sizeof(Stack);
 
 struct Torture
 {
